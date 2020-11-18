@@ -17,9 +17,7 @@ package command
 import (
 	"errors"
 	"os"
-	"time"
-
-	"github.com/liamawhite/licenser/pkg/license"
+	
 	"github.com/liamawhite/licenser/pkg/processor"
 	"github.com/spf13/cobra"
 )
@@ -39,8 +37,11 @@ var applyCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		license := license.NewApache20(time.Now().Year(), args[0])
-		l := processor.New(".", license)
+		if template != nil {
+			template.SetOwner(args[0])
+		}
+		l := processor.New(".", template)
+		
 		if ok := l.Apply(recurseDirectories, isDryRun); !ok {
 			os.Exit(1)
 		}

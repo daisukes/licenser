@@ -57,6 +57,10 @@ func (a *Apache20) IsPresent(in io.Reader) bool {
 	return false
 }
 
+func (a *Apache20) SetOwner(in string) {
+	a.Owner = in
+}
+
 func (a *Apache20) bytes() []byte {
 	if a.licenseCache != nil {
 		return copyBytes(a.licenseCache)

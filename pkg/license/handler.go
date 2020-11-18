@@ -23,4 +23,7 @@ type Handler interface {
 
 	// IsPresent returns true if it can find the license in the passed reader
 	IsPresent(in io.Reader) bool
+
+
+	SetOwner(in string)
 }

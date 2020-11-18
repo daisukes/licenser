@@ -17,9 +17,7 @@ package command
 import (
 	"fmt"
 	"os"
-	"time"
 
-	"github.com/liamawhite/licenser/pkg/license"
 	"github.com/liamawhite/licenser/pkg/processor"
 	"github.com/spf13/cobra"
 )
@@ -36,9 +34,9 @@ Verify will ignore the following files:
   - .licenserignore
   - Files that should be ignored according to .licenserignore (experimental)
 `,
+
 	Run: func(cmd *cobra.Command, args []string) {
-		license := license.NewApache20(time.Now().Year(), "")
-		l := processor.New(".", license)
+		l := processor.New(".", template)
 		if ok := l.Verify(recurseDirectories); !ok {
 			os.Exit(1)
 		}

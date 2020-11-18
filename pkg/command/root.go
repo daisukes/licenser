@@ -17,17 +17,34 @@ package command
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/liamawhite/licenser/pkg/license"
 )
+
 
 var (
 	recurseDirectories bool
+	licenseType string
+	template license.Handler
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "licenser",
 	Short: "Applies and detects the absence of licenses in your repository",
+
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if licenseType == "Apache20" {
+			template = license.NewApache20(time.Now().Year(), "")
+		} else if licenseType == "MIT" {
+			template = license.NewMIT(time.Now().Year(), "")
+		}
+		if template == nil {
+			fmt.Fprintf(os.Stderr, "Unkown license type: %s\n", licenseType)
+			os.Exit(1)
+		}
+	},
 }
 
 // Execute is called by main.main(). It only needs to happen once to the rootCmd.
@@ -40,4 +57,5 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&recurseDirectories, "recurse", "r", false, "recurse from the passed directory")
+	rootCmd.PersistentFlags().StringVarP(&licenseType, "license", "l", "Apache20", "Apache20|MIT")
 }
