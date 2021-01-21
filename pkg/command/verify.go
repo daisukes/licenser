@@ -36,7 +36,7 @@ Verify will ignore the following files:
 `,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		l := processor.New(".", template)
+		l := processor.New(".", template, customStyle)
 		if ok := l.Verify(recurseDirectories); !ok {
 			os.Exit(1)
 		}

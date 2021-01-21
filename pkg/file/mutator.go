@@ -28,15 +28,16 @@ import (
 )
 
 // New returns a new file Mutator
-func New(license license.Handler) *Mutator {
-	return &Mutator{license: license}
+func New(license license.Handler, customStyle []string) *Mutator {
+	return &Mutator{license: license, customStyle: customStyle}
 }
 
 var _ Licenser = &Mutator{}
 
 // Mutator mutates files
 type Mutator struct {
-	license license.Handler
+	license     license.Handler
+	customStyle []string
 }
 
 // Apply the license to the path passed or print to stdout if dryRun
@@ -68,7 +69,7 @@ func (m *Mutator) Verify(path string, _ bool) bool {
 		return false
 	}
 	// If we can't detect language skip (return true)
-	if style := identifyLanguageStyle(path); style == nil {
+	if style := identifyLanguageStyle(path, m.customStyle); style == nil {
 		return true
 	}
 	present := m.license.IsPresent(bytes.NewReader(contents))
@@ -80,7 +81,7 @@ func (m *Mutator) Verify(path string, _ bool) bool {
 
 // this should probably be cached on a per language basis
 func (m *Mutator) styledLicense(path string) []byte {
-	style := identifyLanguageStyle(path)
+	style := identifyLanguageStyle(path, m.customStyle)
 	if style == nil {
 		return nil
 	}
@@ -88,7 +89,19 @@ func (m *Mutator) styledLicense(path string) []byte {
 
 	// TODO: implement block styling
 	if style.isBlock {
-
+		_, _ = buf.WriteString(style.prefix)
+		_, _ = buf.WriteString("\n")
+		scanner := bufio.NewScanner(m.license.Reader())
+		for scanner.Scan() {
+			_, _ = buf.WriteString(style.comment)
+			if len(scanner.Bytes()) != 0 {
+				_, _ = buf.WriteString(" ")
+			}
+			_, _ = buf.Write(scanner.Bytes())
+			_, _ = buf.WriteString("\n")
+		}
+		_, _ = buf.WriteString(style.suffix)
+		_, _ = buf.WriteString("\n")
 	} else {
 		scanner := bufio.NewScanner(m.license.Reader())
 		for scanner.Scan() {
@@ -108,8 +121,13 @@ func merge(license, file []byte) []byte {
 	result := bytes.NewBuffer([]byte{})
 	fileScanner := bufio.NewScanner(bytes.NewReader(file))
 	for fileScanner.Scan() {
-		// If there's a #! preserve it
 		if strings.Contains(fileScanner.Text(), "#!") {
+			// If there's a #! preserve it
+			result.Write(fileScanner.Bytes())
+			result.WriteString("\n\n")
+			result.Write(license)
+		} else if strings.Contains(fileScanner.Text(), "<?xml") {
+			// If there's a <?xml preserve it
 			result.Write(fileScanner.Bytes())
 			result.WriteString("\n\n")
 			result.Write(license)
@@ -132,9 +150,9 @@ func merge(license, file []byte) []byte {
 // This function has the potential to become an unwiedly mess, consider rethinking.
 // TODO: Create a language interface that can be cycled through in order to identify the file as said language
 // Interface should have a lightweight "looksLike" and then a more heavyweight "verify"
-func identifyLanguageStyle(path string) *languageStyle {
+func identifyLanguageStyle(path string, customStyle []string) *languageStyle {
 	// This comparison is probably cheaper so do it first.
-	if result := identifyFromExtension(filepath.Ext(path)); result != nil {
+	if result := identifyFromExtension(filepath.Ext(path), customStyle); result != nil {
 		return result
 	}
 	if match, _ := regexp.MatchString("\\..*rc", path); match {
@@ -153,9 +171,9 @@ func identifyLanguageStyle(path string) *languageStyle {
 	return nil
 }
 
-func identifyFromExtension(extension string) *languageStyle {
+func identifyFromExtension(extension string, customStyle []string) *languageStyle {
 	switch extension {
-	case ".cc", ".cpp", ".c++", ".c":
+	case ".cc", ".cpp", ".c++", ".c", ".h", ".hpp":
 		return commentStyles["c"]
 	case ".go":
 		return commentStyles["golang"]
@@ -169,9 +187,21 @@ func identifyFromExtension(extension string) *languageStyle {
 		return commentStyles["shell"]
 	case ".yaml", ".yml":
 		return commentStyles["yaml"]
-	default:
-		return nil
+	case ".xml":
+		return commentStyles["xml"]
+	case ".lua":
+		return commentStyles["lua"]
 	}
+	for style := range customStyle {
+		var items = strings.Split(customStyle[style], ":")
+		if items[0] == extension || "."+items[0] == extension {
+			if val, ok := commentStyles[items[1]]; ok {
+				return val
+			}
+		}
+	}
+
+	return nil
 }
 
 func getFileContents(path string) []byte {

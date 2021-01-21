@@ -19,15 +19,16 @@ import (
 	"os"
 	"time"
 
-	"github.com/spf13/cobra"
+	"github.com/liamawhite/licenser/pkg/file"
 	"github.com/liamawhite/licenser/pkg/license"
+	"github.com/spf13/cobra"
 )
-
 
 var (
 	recurseDirectories bool
-	licenseType string
-	template license.Handler
+	licenseType        string
+	template           license.Handler
+	customStyle        []string
 )
 
 var rootCmd = &cobra.Command{
@@ -57,5 +58,6 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&recurseDirectories, "recurse", "r", false, "recurse from the passed directory")
-	rootCmd.PersistentFlags().StringVarP(&licenseType, "license", "l", "Apache20", "Apache20|MIT")
+	rootCmd.PersistentFlags().StringVarP(&licenseType, "license", "l", "Apache20", "Apache20 or MIT is supported")
+	rootCmd.PersistentFlags().StringSliceVarP(&customStyle, "style", "s", []string{}, "<extension>:<style> available style is "+file.AllStyles())
 }

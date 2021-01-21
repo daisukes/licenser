@@ -17,7 +17,7 @@ package command
 import (
 	"errors"
 	"os"
-	
+
 	"github.com/liamawhite/licenser/pkg/processor"
 	"github.com/spf13/cobra"
 )
@@ -40,8 +40,8 @@ var applyCmd = &cobra.Command{
 		if template != nil {
 			template.SetOwner(args[0])
 		}
-		l := processor.New(".", template)
-		
+		l := processor.New(".", template, customStyle)
+
 		if ok := l.Apply(recurseDirectories, isDryRun); !ok {
 			os.Exit(1)
 		}

@@ -48,10 +48,10 @@ type Processor struct {
 
 // New creates a new file processor starting the the passed startDirectory
 // and using the passed license to apply and verify files
-func New(startDirectory string, license license.Handler) *Processor {
+func New(startDirectory string, license license.Handler, customStyle []string) *Processor {
 	return &Processor{
 		startDirectory:         startDirectory,
-		mutator:                mutator.New(license),
+		mutator:                mutator.New(license, customStyle),
 		skipListGitIgnore:      buildGitIgnoreSkip(startDirectory),
 		skipListLicenserIgnore: buildLicenserIgnoreSkip(startDirectory),
 		skipListExtension:      buildExtensionSkip(),

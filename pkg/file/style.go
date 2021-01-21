@@ -25,6 +25,9 @@ type languageStyle struct {
 	// If isBlock is true this should be the block comment style
 	// If false this should be the single line comment style
 	comment string
+
+	prefix string
+	suffix string
 }
 
 var commentStyles = map[string]*languageStyle{
@@ -38,4 +41,20 @@ var commentStyles = map[string]*languageStyle{
 	"rust":     {isBlock: false, comment: "//"},
 	"shell":    {isBlock: false, comment: "#"},
 	"yaml":     {isBlock: false, comment: "#"},
+	"xml":      {isBlock: true, comment: "", prefix: "<!--", suffix: "-->"},
+	"lua":      {isBlock: false, comment: "--"},
+}
+
+// AllStyles returns all styles as string
+func AllStyles() string {
+	var styles = ""
+	var first = true
+	for key := range commentStyles {
+		if !first {
+			styles += ","
+		}
+		styles += key
+		first = false
+	}
+	return styles
 }
